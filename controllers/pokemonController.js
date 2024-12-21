@@ -1,4 +1,5 @@
 const StatusPokemon = require ("../models/pokemonModels")
+const { fetchPokemon } = require("../services/fech")
 exports.test =(req,res)=>{
     console.log("hola controller")
     res.status(200).send("Hola desde controller")
@@ -19,8 +20,8 @@ exports.createPokemonStatus = async (req,res)=>{
 }
 exports.getPokemonStatus = async (req,res)=>{
     try{
-        const status = await StatusPokemon.find({})
-        res.status(200).json(status)
+        const Status = await StatusPokemon.find({})
+        res.status(200).json(Status)
     }catch (error) {
         console.error(error)
         return res.status(500).json({error})
@@ -30,10 +31,18 @@ exports.getPokemonStatus = async (req,res)=>{
 exports.getPokemonByPokemonId = async (req,res)=>{
     try {
         const pokemon_id = req.params.pokemon_id;
-        let pokemon = await StatusPokemon.findOne({"pokemon_id":pokemon_id})
-        if(!pokemon){
-            res.status(404).json({message:"Pokemon not found"})
+        let statusPokemon = await StatusPokemon.findOne({"pokemon_id":pokemon_id})
+        if(!statusPokemon){
+            let newStatusPokemon ={
+                pokemon_id:pokemon_id,
+                view: false,
+                catch: false,
+                in_team: false
+            }
+            pokemon = await fetchPokemon(pokemon_id,newStatusPokemon)
+            res.status(200).json(pokemon)
         } else{
+            pokemon = await fetchPokemon(pokemon_id,statusPokemon)
             res.status(200).json(pokemon)
         }
         
@@ -76,6 +85,9 @@ exports.catchPokemonByPokemonId = async (req,res)=>{
 }
 }
 exports.inTeamPokemonByPokemonId = async (req,res)=>{
+    const pokemon_id =req.params.pokemon_id;
+    const pokemonStatusId = req.body.pokemon_id
+    if (pokemon_id == pokemonStatusId){
     try{
         const pokemon_id = req.params.pokemon_id
         const pokemon = await StatusPokemon.findOne({"pokemon_id":pokemon_id})
@@ -90,5 +102,8 @@ exports.inTeamPokemonByPokemonId = async (req,res)=>{
     }catch (error){
         console.error(error)
         return res.status(500).json({error})
+    }
+}else{
+        return res.status(400).json({message:"Bad request, pokemon_id, pokemon in_team"})
     }
 }
